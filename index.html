@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body> <h1> ajax - live search </h1> 
+
+<h1>!!!!!!FLASK SUPERMARKET + LIVE SEARCH OF INPUT !!!!!!!!!!!!</h1>
+<xmp>
+Certainly! Here are all the changes together for the Flask application to include a form for user details, a dropdown menu for item selection, and a live search feature:
+
+**app.py**:
+```python
+from flask import Flask, render_template, request, jsonify
+
+app = Flask(__name__)
+
+# Temporary storage for user data
+users = []
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    # Extract form data
+    name = request.form.get('name')
+    address = request.form.get('address')
+    phone = request.form.get('phone')
+    date = request.form.get('date')
+    item = request.form.get('item')
+    suggestions = request.form.get('suggestions')
+
+    # Store user data
+    user = {
+        'name': name,
+        'address': address,
+        'phone': phone,
+        'date': date,
+        'item': item,
+        'suggestions': suggestions
+    }
+    users.append(user)
+
+    return jsonify({'message': 'User data submitted successfully'})
+
+@app.route('/search', methods=['POST'])
+def search():
+    query = request.form.get('query')
+    # Perform search operation based on the name of the customer from the submitted form data
+    results = [user for user in users if query.lower() in user['name'].lower()]
+    return jsonify(results)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+**index.html**:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Application</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Supermarket Application</h1>
+    <h2>User Form</h2>
+    <form id="user-form" action="/submit" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required><br><br>
+        <label for="phone">Phone Number:</label>
+        <input type="text" id="phone" name="phone" required><br><br>
+        <label for="date">Preferred Date:</label>
+        <input type="date" id="date" name="date"><br><br>
+        <label for="item">Favorite Item:</label>
+        <select id="item" name="item">
+            <option value="bread">Bread</option>
+            <option value="milk">Milk</option>
+            <option value="eggs">Eggs</option>
+            <!-- Add more options as needed -->
+        </select><br><br>
+        <label for="suggestions">Suggestions:</label><br>
+        <textarea id="suggestions" name="suggestions" rows="4" cols="50"></textarea><br><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <h2>Live Search</h2>
+    <input type="text" id="search" placeholder="Search by name">
+    <ul id="user-list"></ul>
+
+    <script>
+        $(document).ready(function(){
+            $('#search').keyup(function(){
+                var query = $(this).val();
+                $.ajax({
+                    url: '/search',
+                    type: 'POST',
+                    data: {query: query},
+                    success: function(response){
+                        $('#user-list').html('');
+                        $.each(response, function(index, user){
+                            $('#user-list').append('<li>' + user.name + '</li>');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+```
+
+<!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+    
+</xmp>
+
+<h1> CUSTOMER RAILS SEARCH + RESET </h1>
+<xmp>
+Sure, here's the complete code for the Rails application for customer registration:
+
+1. **Generate Scaffold**: Run the following command to generate a scaffold for customer registration:
+
+   ```bash
+   rails generate scaffold Customer name:string contact_number:string gender:string favorite_item:string
+   ```
+
+2. **Run Migrations**: Run the migration to create the necessary database table:
+
+   ```bash
+   rails db:migrate
+   ```
+
+3. **Update Form View**: Update the form view (`_form.html.erb` located in `app/views/customers`) to include fields for name, contact number, gender, and a dropdown menu for selecting a favorite item:
+
+   ```erb
+   <!-- app/views/customers/_form.html.erb -->
+<%= form_with(model: @customer, local: true) do |form| %>
+  <% if @customer.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@customer.errors.count, "error") %> prohibited this customer from being saved:</h2>
+
+      <ul>
+        <% @customer.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :name %>
+    <%= form.text_field :name %>
+  </div>
+
+  <div class="field">
+    <%= form.label :contact_number %>
+    <%= form.text_field :contact_number %>
+  </div>
+
+  <div class="field">
+    <%= form.label :gender %>
+    <%= form.text_field :gender %>
+  </div>
+
+  <div class="field">
+    <%= form.label :favorite_item, 'Favorite Item' %>
+    <%= form.select :favorite_item, ['Item 1', 'Item 2', 'Item 3'], {}, { prompt: 'Select an item' } %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit "Submit" %>
+    <%= button_tag "Reset", type: 'button', onclick: "resetForm()" %>
+  </div>
+<% end %>
+
+<script>
+  function resetForm() {
+    document.getElementById("customer_name").value = "";
+    document.getElementById("customer_contact_number").value = "";
+    document.getElementById("customer_gender").value = "";
+    document.getElementById("customer_favorite_item").selectedIndex = 0; // Reset dropdown to default option
+  }
+</script>
+
+   ```
+
+4. **Implement Search**: Implement search functionality in the `index` action of the Customers controller (`app/controllers/customers_controller.rb`) to filter customers by name:
+
+   ```ruby
+   # app/controllers/customers_controller.rb
+   class CustomersController < ApplicationController
+     before_action :set_customer, only: %i[show edit update destroy]
+
+     def index
+       @customers = Customer.all
+       @customers = @customers.where("name LIKE ?", "%#{params[:search]}%") if params[:search].present?
+     end
+
+     # Other actions...
+
+     private
+
+     def set_customer
+       @customer = Customer.find(params[:id])
+     end
+
+     # Other private methods...
+   end
+   ```
+
+5. **Update Views for Search**: Update the index view (`index.html.erb` located in `app/views/customers`) to include a search form:
+
+   ```erb
+   <!-- app/views/customers/index.html.erb -->
+   <h1>Customers</h1>
+
+   <%= form_tag customers_path, method: :get do %>
+     <p>
+       <%= text_field_tag :search, params[:search], placeholder: "Search by name" %>
+       <%= submit_tag "Search", name: nil %>
+     </p>
+   <% end %>
+
+   <table>
+     <thead>
+       <tr>
+         <th>Name</th>
+         <th>Contact Number</th>
+         <th>Gender</th>
+         <th>Favorite Item</th>
+         <th colspan="3"></th>
+       </tr>
+     </thead>
+
+     <tbody>
+       <% @customers.each do |customer| %>
+         <tr>
+           <td><%= customer.name %></td>
+           <td><%= customer.contact_number %></td>
+           <td><%= customer.gender %></td>
+           <td><%= customer.favorite_item %></td>
+           <td><%= link_to 'Show', customer %></td>
+           <td><%= link_to 'Edit', edit_customer_path(customer) %></td>
+           <td><%= link_to 'Destroy', customer, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+         </tr>
+       <% end %>
+     </tbody>
+   </table>
+
+   <br>
+
+   <%= link_to 'New Customer', new_customer_path %>
+   ```
+
+6. **Start Rails Server**: Run the following command to start the Rails server:
+
+   ```bash
+   rails server
+   ```
+Rails.application.routes.draw do
+  root 'customers#index'
+  resources :customers
+  # Other routes...
+end
+<!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+       
+</xmp>
+<h1> RAILS TELEPHONE VALIDATE + SEARCH </h1>
+<xmp>
+To create a Rails application to collect names and telephone numbers with the specified requirements, follow these steps:
+
+1. **Generate Scaffold**: Run the following command to generate a scaffold for collecting names and telephone numbers:
+
+   ```bash
+   rails generate scaffold Contact name:string telephone:string
+   ```
+
+   This command generates a model, controller, views, and migration file for the Contact model with attributes `name` and `telephone`.
+
+2. **Run Migrations**: Run the migration to create the necessary database table for the Contact model:
+
+   ```bash
+   rails db:migrate
+   ```
+
+3. **Update Model Validation**: Open the `app/models/contact.rb` file and add validation for the telephone number format:
+
+   ```ruby
+   # app/models/contact.rb
+   class Contact < ApplicationRecord
+     validates :name, presence: true
+     validates :telephone, presence: true, format: { with: /\A\d{3}-\d{3}-\d{4}\z/, message: "must be in the format ddd-ddd-dddd" }
+   end
+   ```
+
+   This ensures that the telephone number must be in the format `ddd-ddd-dddd`.
+
+4. **Update Views**: Update the form view (`_form.html.erb` located in `app/views/contacts`) to include fields for name and telephone number:
+
+   ```erb
+   <!-- app/views/contacts/_form.html.erb -->
+   <%= form_with(model: contact, local: true) do |form| %>
+     <% if contact.errors.any? %>
+       <div id="error_explanation">
+         <h2><%= pluralize(contact.errors.count, "error") %> prohibited this contact from being saved:</h2>
+
+         <ul>
+           <% contact.errors.full_messages.each do |message| %>
+             <li><%= message %></li>
+           <% end %>
+         </ul>
+       </div>
+     <% end %>
+
+     <div class="field">
+       <%= form.label :name %>
+       <%= form.text_field :name %>
+     </div>
+
+     <div class="field">
+       <%= form.label :telephone %>
+       <%= form.text_field :telephone %>
+     </div>
+
+     <div class="actions">
+       <%= form.submit "Submit" %>
+       <%= button_to "Reset", new_contact_path, method: :get %>
+     </div>
+   <% end %>
+   ```
+
+5. **Implement Search and Filter Features**: Implement search and filter functionality in the `index` action of the Contacts controller (`app/controllers/contacts_controller.rb`) to filter contacts by telephone number:
+
+   ```ruby
+   # app/controllers/contacts_controller.rb
+   class ContactsController < ApplicationController
+     before_action :set_contact, only: %i[show edit update destroy]
+
+     def index
+       @contacts = Contact.all
+       @contacts = @contacts.where("telephone LIKE ?", "%#{params[:search]}%") if params[:search].present?
+     end
+
+     # Other actions...
+
+     private
+
+     def set_contact
+       @contact = Contact.find(params[:id])
+     end
+
+     # Other private methods...
+   end
+   ```
+
+6. **Update Views for Search**: Update the index view (`index.html.erb` located in `app/views/contacts`) to include a search form:
+
+   ```erb
+   <!-- app/views/contacts/index.html.erb -->
+   <h1>Contacts</h1>
+
+   <%= form_tag contacts_path, method: :get do %>
+     <p>
+       <%= text_field_tag :search, params[:search], placeholder: "Search by telephone number" %>
+       <%= submit_tag "Search", name: nil %>
+     </p>
+   <% end %>
+
+   <!-- Contacts table... -->
+   ```
+Rails.application.routes.draw do
+  root 'contacts#index'
+  resources :contacts
+  # Other routes...
+end
+
+
+7. **Start Rails Server**: Run the following command to start the Rails server:
+
+   ```bash
+   rails server
+   ```
+
+
+<!------------------------------------------------------------------------------------------ -->
+   </xmp>
+<h1> RAILS BULBS </h1>
+<xmp>
+To create a Rails application for bulb shopping with the specified requirements, including a form to get user input, calculation of the total amount, and displaying the result to the user, follow these steps:
+
+1. **Generate Scaffold**: Run the following command to generate a scaffold for the Order model:
+
+   ```bash
+   rails generate scaffold Order name:string item1:boolean item2:boolean item3:boolean item4:boolean card_type:string
+   ```
+
+   This command generates a model, controller, views, and migration file for the Order model with attributes `name`, `item1`, `item2`, `item3`, `item4`, and `card_type`.
+
+2. **Run Migrations**: Run the migration to create the necessary database table for the Order model:
+
+   ```bash
+   rails db:migrate
+   ```
+
+3. **Update Model and Controller**: Open the `app/models/order.rb` file and update it to calculate the total amount and VAT for each order:
+
+   ```ruby
+   # app/models/order.rb
+   class Order < ApplicationRecord
+     ITEMS = {
+       item1: 10,
+       item2: 20,
+       item3: 30,
+       item4: 40
+     }
+
+     VAT_RATE = 0.135
+
+     def total_amount
+       subtotal = ITEMS.select { |key, _| self[key] }.values.sum
+       subtotal + (subtotal * VAT_RATE)
+     end
+   end
+   ```
+
+4. **Update Views**: Update the form view (`_form.html.erb` located in `app/views/orders`) to include fields for name, items, and card type:
+
+   ```erb
+   <!-- app/views/orders/_form.html.erb -->
+   <%= form_with(model: order, local: true) do |form| %>
+     <% if order.errors.any? %>
+       <div id="error_explanation">
+         <h2><%= pluralize(order.errors.count, "error") %> prohibited this order from being saved:</h2>
+
+         <ul>
+           <% order.errors.full_messages.each do |message| %>
+             <li><%= message %></li>
+           <% end %>
+         </ul>
+       </div>
+     <% end %>
+
+     <div class="field">
+       <%= form.label :name %>
+       <%= form.text_field :name %>
+     </div>
+
+     <div class="field">
+       <%= form.label :items, 'Items' %>
+       <% Order::ITEMS.each do |key, value| %>
+         <label>
+           <%= check_box_tag "order[item#{key.to_s.last}]", true %>
+           <%= "Item #{key.to_s.last}: $#{value}" %>
+         </label>
+       <% end %>
+     </div>
+
+     <div class="field">
+       <%= form.label :card_type, 'Card Type' %><br>
+       <%= form.radio_button :card_type, 'MasterCard' %>
+       <%= form.label :card_type, 'MasterCard' %>
+       <%= form.radio_button :card_type, 'Visa' %>
+       <%= form.label :card_type, 'Visa' %>
+     </div>
+
+     <div class="actions">
+       <%= form.submit "Submit" %>
+     </div>
+   <% end %>
+   ```
+
+5. **Update Controller**: Open the `app/controllers/orders_controller.rb` file and permit the new parameters for the form:
+
+   ```ruby
+   # app/controllers/orders_controller.rb
+   class OrdersController < ApplicationController
+     before_action :set_order, only: %i[show edit update destroy]
+
+     # POST /orders
+     # POST /orders.json
+     def create
+       @order = Order.new(order_params)
+
+       respond_to do |format|
+         if @order.save
+           format.html { redirect_to @order, notice: 'Order was successfully created.' }
+           format.json { render :show, status: :created, location: @order }
+         else
+           format.html { render :new }
+           format.json { render json: @order.errors, status: :unprocessable_entity }
+         end
+       end
+     end
+
+     # Other actions...
+
+     private
+
+     # Only allow a list of trusted parameters through.
+     def order_params
+       params.require(:order).permit(:name, :card_type, :item1, :item2, :item3, :item4)
+     end
+   end
+   ```
+
+6. **Update Views for Show**: Update the show view (`show.html.erb` located in `app/views/orders`) to display the total amount incurred by the user in a table:
+
+   ```erb
+   <!-- app/views/orders/show.html.erb -->
+   <p>
+     <strong>Name:</strong>
+     <%= @order.name %>
+   </p>
+
+   <p>
+     <strong>Items:</strong>
+     <ul>
+       <% Order::ITEMS.each do |key, value| %>
+         <% if @order["item#{key.to_s.last}"] %>
+           <li>Item <%= key.to_s.last %>: $<%= value %></li>
+         <% end %>
+       <% end %>
+     </ul>
+   </p>
+
+   <p>
+     <strong>Card Type:</strong>
+     <%= @order.card_type %>
+   </p>
+
+   <table>
+     <tr>
+       <th>Total Amount (including VAT)</th>
+       <td>$<%= @order.total_amount.round(2) %></td>
+     </tr>
+   </table>
+
+   <%= link_to 'Edit', edit_order_path(@order) %> |
+   <%= link_to 'Back', orders_path %>
+  '''
+Rails.application.routes.draw do
+  root 'orders#index'
+  resources :orders
+  # Other routes...
+7. **Start Rails Server**: Run the following command to start the Rails server:
+
+   ```bash
+   rails server
+
+<!------------------------------------------------------------->   ```
+
+</xmp>
+<h1> PATIENT NESTED </h1>
+<xmp>
+To create a Rails application for patient record management with nested attributes for the patient's name and CSS styling for display, along with search functionality, follow these steps:
+
+1. **Generate Scaffold**: Run the following command to generate a scaffold for the Patient model with nested attributes for the name:
+
+   ```bash
+   rails generate scaffold Patient first_name:string middle_name:string last_name:string
+   ```
+
+   This command generates a model, controller, views, and migration file for the Patient model with nested attributes for the name.
+
+2. **Run Migrations**: Run the migration to create the necessary database table for the Patient model:
+
+   ```bash
+   rails db:migrate
+   ```
+
+3. **Update Model**: Open the `app/models/patient.rb` file and configure nested attributes for the patient's name:
+
+   ```ruby
+   # app/models/patient.rb
+   class Patient < ApplicationRecord
+     has_one :name, dependent: :destroy
+     accepts_nested_attributes_for :name
+   end
+   ```
+
+4. **Generate Nested Name Model**: Run the following command to generate a scaffold for the nested Name model:
+
+   ```bash
+   rails generate scaffold Name first_name:string middle_name:string last_name:string patient:references
+   ```
+
+   This command generates a model, controller, views, and migration file for the Name model with a reference to the Patient model.
+
+5. **Run Migrations**: Run the migration to create the necessary database table for the Name model:
+
+   ```bash
+   rails db:migrate
+   ```
+
+6. **Update Views**: Update the form view (`_form.html.erb` located in `app/views/patients`) to include fields for the patient's name:
+
+   ```erb
+   <!-- app/views/patients/_form.html.erb -->
+   <%= form_with(model: patient) do |form| %>
+     <!-- Other fields -->
+     <div class="field">
+       <%= form.fields_for :name, patient.name || patient.build_name do |name_form| %>
+         <%= name_form.label :first_name %>
+         <%= name_form.text_field :first_name %>
+         <%= name_form.label :middle_name %>
+         <%= name_form.text_field :middle_name %>
+         <%= name_form.label :last_name %>
+         <%= name_form.text_field :last_name %>
+       <% end %>
+     </div>
+     <!-- Submit button -->
+   <% end %>
+   ```
+
+7. **Implement Search**: Implement search functionality in the `index` action of the Patients controller (`app/controllers/patients_controller.rb`) to filter patients by name:
+
+   ```ruby
+   # app/controllers/patients_controller.rb
+   class PatientsController < ApplicationController
+     def index
+       @patients = Patient.includes(:name).all
+       @patients = @patients.where("names.first_name LIKE ? OR names.last_name LIKE ?", "%#{params[:search]}%", "%#{params[:search]}%") if params[:search].present?
+     end
+
+     # Other actions...
+   end
+   ```
+
+8. **Update Views for Search**: Update the index view (`index.html.erb` located in `app/views/patients`) to include a search form:
+
+   ```erb
+   <!-- app/views/patients/index.html.erb -->
+   <%= form_tag patients_path, method: :get do %>
+     <p>
+       <%= text_field_tag :search, params[:search], placeholder: "Search by name" %>
+       <%= submit_tag "Search", name: nil %>
+     </p>
+   <% end %>
+   ```
+
+9. **Add CSS Styling**: You can add CSS styling to your views by including a separate CSS file in the `app/assets/stylesheets` directory and linking it in your layout file (`app/views/layouts/application.html.erb`).
+Rails.application.routes.draw do
+  root 'patients#index'
+  resources :patients
+  # Other routes...
+end
+
+10. **Start Rails Server**: Run the following command to start the Rails server:
+
+    ```bash
+    rails server
+    ```
+<!------------------------------------------------------------------------>
+    </xmp>
+
+<h1> JS + RUBY </h1>
+<xmp>
+To have Ruby interact with user input from a JavaScript form, you would need to set up a server-side component in Ruby that can receive HTTP requests, such as with a Ruby on Rails application or a Sinatra application. 
+
+Here's a simple example using Sinatra:
+
+1. **Install Sinatra**:
+   If you haven't already installed Sinatra, you can do so by running:
+   ```
+   gem install sinatra
+   ```
+
+2. **Create a Ruby file**:
+
+   Create a file named `app.rb` and add the following code to it:
+
+   ```ruby
+   require 'sinatra'
+
+   get '/' do
+     erb :index
+   end
+
+   post '/check_temperatures' do
+     temp1 = params[:temp1].to_i
+     temp2 = params[:temp2].to_i
+
+     if temp1 < 0 && temp2 > 100
+       "Temperature 1 is below 0 and Temperature 2 is above 100."
+     elsif temp1 < 0
+       "Temperature 1 is below 0 but Temperature 2 is not above 100."
+     elsif temp2 > 100
+       "Temperature 1 is not below 0 but Temperature 2 is above 100."
+     else
+       "Neither temperature meets the conditions."
+     end
+   end
+   ```
+
+3. **Create a form**:
+
+   Create a file named `views/index.erb` and add the following code to it:
+
+   ```html
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Temperature Checker</title>
+   </head>
+   <body>
+     <h1>Temperature Checker</h1>
+     <form id="temperatureForm" action="/check_temperatures" method="post">
+       <label for="temp1">Temperature 1:</label>
+       <input type="number" id="temp1" name="temp1" required>
+       <br>
+       <label for="temp2">Temperature 2:</label>
+       <input type="number" id="temp2" name="temp2" required>
+       <br>
+       <button type="submit">Check Temperatures</button>
+     </form>
+     <div id="result"></div>
+   </body>
+   </html>
+   ```
+
+4. **Run the Sinatra application**:
+
+   Run the following command in your terminal:
+   ```
+   ruby app.rb
+   ```
+
+5. **Access the application**:
+
+   your_project_directory/
+│
+├── app.rb
+│
+└── views/
+    └── index.erb
+
+
+This setup allows JavaScript to send form data to the Ruby server, which then processes the data and sends back a response.
+</xmp>
+</body>
+</html>
